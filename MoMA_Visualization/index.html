@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta content='width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0' name='viewport'>
+
+  <title>Paintings at the Museum of Modern Art - MoMA</title>
+
+  <script src='js/d3.js' type='text/javascript'></script>
+  <script src='js/crossfilter.js' type='text/javascript'></script>
+  <script src='js/dc.js' type='text/javascript'></script>
+  <script src='js/jquery-1.9.1.min.js' type='text/javascript'></script>
+  <script src='js/bootstrap.min.js' type='text/javascript'></script>
+
+  <link href='css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+  <link href='css/dc.css' rel='stylesheet' type='text/css'>
+
+  <style type="text/css">
+      h4 span {
+        font-size:14px;
+        font-weight:normal;
+      }
+
+      h2 {
+        float: left;
+      }
+
+      h2 span {
+        font-size:14px;
+        font-weight:normal;
+        }
+
+      div#chart svg g g.axis g.tick text {
+          font-size: 10
+        }
+
+      .row-m-t{
+          margin-top : 20px
+        }
+
+       .row-m-t-lrg{
+          margin-top : 30px
+        }
+
+      .dc-chart text.pie-slice {fill: black;}
+      .dc-chart g.row text {fill: black;}
+  </style>
+</head>
+
+<body>
+
+<div class='container' style='font: 13px sans-serif;'>
+   <h2>Paintings at the Museum of Modern Art - MoMA</h2>
+   <div class="dc-data-count" style="float: left;">
+      <h4>
+        <span>
+          <span class="filter-count"></span>
+           selected out of
+          <span class="total-count"></span>
+           records |
+          <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+        </span>
+      </h4>
+      <p>  -- Explore the MoMA database by interacting with these visualizations.
+        Drag or click on the graphs to filter a list of artworks in the bottom table. </p>
+   </div>
+
+   <div class='row'>
+      <div class='span12' id='dc-time-chart'>
+        <h4>Age of Painting by Year Acquired</h4>
+      </div>
+   </div>
+
+   <div class='row row-m-t-lrg'>
+     <div class='span6' id='continent-chart'>
+       <h4>Number of Artists From Each Region
+         <span>
+           <a class="reset"
+             href="javascript:continentChart.filterAll();dc.redrawAll();"
+             style="display: none;">
+             Reset
+           </a>
+         </span>
+       </h4>
+     </div>
+
+     <div class='span6' id='dc-gender-chart'>
+       <h4>Artist Gender
+         <span>
+           <a class="reset"
+             href="javascript:genderChart.filterAll();dc.redrawAll();"
+             style="display: none;">
+             Reset
+           </a>
+         </span>
+       </h4>
+     </div>
+   </div>
+
+   <div class='row row-m-t-lrg'>
+       <div class='span6' id='dc-artSize-chart'>
+         <h4>Paintings by Size (m<sup>2</sup>)
+           <span>
+             <a class="reset"
+               href="javascript:artSizeChart.filterAll();dc.redrawAll();"
+               style="display: none;">
+               Reset
+             </a>
+           </span>
+         </h4>
+       </div>
+
+       <div class='span6' id='dc-artAge-chart'>
+        <h4>Age of Painting when Acquired
+           <span>
+             <a class="reset"
+               href="javascript:artAgeChart.filterAll();dc.redrawAll();"
+               style="display: none;">
+               Reset
+             </a>
+           </span>
+         </h4>
+       </div>
+   </div>
+
+   <div class='row row-m-t'>
+      	<div class='span12'>
+          <h4>List of Artwork Corresponding to the Filters</h4>
+          <table class='table table-hover' id='dc-table-graph'>
+            <thead>
+              <tr class='header'>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Nationality</th>
+                <th>Gender</th>
+                <th>Date Produced</th>
+                <th>Year Acquired</th>
+                <th>Size (m<sup>2</sup>)</th>
+                <th>Thumbnail</th>
+              </tr>
+            </thead>
+          </table>
+      	</div>
+   </div>
+
+    <H5>Generated with
+      <a href="http://nickqizhu.github.io/dc.js/">dc.js</a>,
+      <a href="http://square.github.io/crossfilter/">crossfilter</a>,
+      <a href="http://d3js.org/">d3.js</a> and
+      <a href="http://twitter.github.io/bootstrap/">bootstrap</a>.
+    </H5>
+    <p>Data via <a href="https://github.com/MuseumofModernArt/collection">The Museum of Modern Art (MoMA) Collection</a>
+    with <a href="http://dx.doi.org/10.5281/zenodo.836923"> digital object identifier</a></p>
+      <p>MoMA requests that you actively acknowledge and give attribution to MoMA wherever possible.
+        If you use one or both of the datasets for a publication,
+        please cite it using the digital object identifier DOI. Attribution supports efforts to release other data.
+        It also reduces the amount of “orphaned data,” helping retain links to authoritative sources. </p>
+  <!--</div>
+-->
+</div>
+
+<script>
+
+
+/******************************************************
+* Step1: Create the dc.js chart objects & ling to div *
+******************************************************/
+
+  var timeChart = dc.barChart("#dc-time-chart");
+  var genderChart = dc.pieChart("#dc-gender-chart");
+  var dataTable = dc.dataTable("#dc-table-graph");
+  var continentChart = dc.rowChart('#continent-chart');
+  var artSizeChart = dc.barChart("#dc-artSize-chart");
+  var artAgeChart = dc.barChart("#dc-artAge-chart");
+
+
+
+/**********************************
+* Step0: Load data from json file *
+**********************************/
+
+// load data from a csv file
+d3.csv("data/artworks.csv", function(data) {
+
+  // format our data
+  // var dtgFormat = d3.time.format("%Y-%m-%dT%H:%M:%S");
+  var dtgFormat = d3.time.format("%Y-%m-%d");
+
+
+  data.forEach(function(d) {
+    d.dtg   = dtgFormat.parse(d.DateAcquired.substr(0,19));
+    d.acq   = d.YearAcquired;
+    d.artSize = d3.round(+d.area/10000,2);
+    d.artAge = d3.round(+d.AgeAtAcquisition,0);
+    d.id = d.ObjectID;
+    d.tit   = d.Title;
+    d.art   = d.Artist;
+    d.nat   = d.Nationality;
+    d.gen   = d.Gender;
+    d.thu   = d.ThumbnailURL;
+    d.con   = d.Continent;
+
+  });
+
+
+
+/****************************************
+* 	Run the data through crossfilter    *
+****************************************/
+
+  var facts = crossfilter(data);  // Gets our 'facts' into crossfilter
+  var all = facts.groupAll();
+/******************************************************
+* Create the Dimensions                               *
+* A dimension is something to group or filter by.     *
+* Crossfilter can filter by exact value, or by range. *
+******************************************************/
+
+  // define an annual volume of acquisitions Dimension
+  var volumeByYear = facts.dimension(function(d) {
+    return d3.time.year(d.dtg);  });
+
+  // map/reduce to group sum
+  var volumeByYearGroup = volumeByYear.group()
+    .reduceCount(function(d) { return d.dtg; });
+
+    // map gender Dimension
+  var genderDimension = facts.dimension(function(d)  {
+    return d.gen;  });
+
+  // map/reduce gender Group
+  var genderGroup = genderDimension.group()
+    .reduceCount(function(d) { return d.gen; });
+
+    // For datatable
+  var timeDimension = facts.dimension(function (d) {
+    return d.dtg;
+  }); // group or filter by time
+
+  	// for row chart of continents
+   var contDimension = facts.dimension(function(d)  {
+    return d.con;  });
+
+   // count of continent group
+   var contGroup = contDimension.group()
+    .reduceCount(function(d) { return d.con; });
+
+    // for artSize
+    var artSizeValue = facts.dimension(function (d) {
+      if (d.artSize == NaN ) {
+        console.log('No artSize: '+ d.artSize);
+        return 0.99;
+      }
+      else {
+        //console.log('artSize: '+ d.artSize);
+        return d.artSize;
+      }    // add the artSize dimension
+    });
+    var artSizeValueGroupSum = artSizeValue.group()
+      .reduceSum(function(d) { return d.artSize; });	// sums
+    var artSizeValueGroupCount = artSizeValue.group()
+      .reduceCount(function(d) { return d.artSize; }) // counts
+
+      console.log("got here B");
+
+    // for artAge
+    var artAgeValue = facts.dimension(function (d) {
+      return d.artAge;
+    });
+    var artAgeValueGroup = artAgeValue.group();
+    console.log("got here C");
+    console.log("artAgeValueGroup:" +artAgeValueGroup.size());
+
+
+/***************************************
+* 	Step4: Create the Visualisations   *
+***************************************/
+// Setup the charts
+
+// count all the facts
+dc.dataCount(".dc-data-count")
+  .dimension(facts)
+  .group(all);
+
+
+
+  // time graph
+  timeChart.width(960)
+    .height(160)
+    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .dimension(volumeByYear)
+    .group(volumeByYearGroup)
+    .transitionDuration(500)
+    .centerBar(true)
+    .gap(1)
+	.elasticY(true)
+    // .x(d3.time.scale().domain([new Date(2013, 6, 18), new Date(2013, 6, 24)])) // scale and domain of the graph
+    .x(d3.time.scale().domain([new Date(1932, 1, 1), new Date(2017, 12, 31)])) // scale and domain of the graph
+    .xAxis();
+
+
+genderChart
+  .width(480)
+  .height(250)
+  .radius(100)
+  .innerRadius(20)
+  .transitionDuration(750)
+  .dimension(genderDimension)
+  .group(genderGroup)
+  .colors(d3.scale.category20c());
+
+    //row chart
+  	continentChart /* dc.rowChart('#continent-chart') */
+	    .width(500)
+	    .height(250)
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .group(contGroup)
+	    .dimension(contDimension)
+      .colors(d3.scale.category20())
+
+
+        // Painting size Bar Graph Counted
+        artSizeChart.width(500)
+          .height(250)
+          .margins({top: 10, right: 10, bottom: 20, left: 20})
+          .dimension(artSizeValue)
+          .group(artSizeValueGroupCount)
+          .transitionDuration(750)
+          .centerBar(true)
+          .x(d3.scale.linear().domain([0, 7.5]))
+          .gap(77)
+          .elasticY(true)
+          .xAxis().tickFormat();
+
+        var minAge = artAgeValue.bottom(1)[0].artAge;
+        var maxAge = artAgeValue.top(1)[0].artAge;
+        console.log("got here C v002");
+
+        // artAge bar graph
+        artAgeChart.width(550)
+          .height(250)
+          .margins({top: 10, right: 10, bottom: 20, left: 40})
+          .dimension(artAgeValue)
+          .group(artAgeValueGroup)
+          .transitionDuration(750)
+          .centerBar(true)
+          .x(d3.scale.linear().domain([0, maxAge]).range([0,10]))
+          .y(d3.scale.linear().domain([-5, 500]).range([0,10]))
+          .gap(1)
+          .elasticY(true)
+          .xAxis().tickFormat(function(v) {return v;});
+
+
+
+    // Table of artworks data
+    dataTable.width(960).height(800)
+      .dimension(timeDimension)
+      .group(function(d) { return "<b>Top 30 results:</b>";})
+      .size(30)             // number of rows to return
+      .columns([
+        function(d) { return d.tit; },
+        function(d) { return d.art; },
+        function(d) { return d.nat; },
+        function(d) { return d.gen; },
+        function(d) { return d.DateProduced; },
+        function(d) { return d.acq; },
+        function(d) { return d.artSize; },
+        function(d) { return '<a href=\"' + d.thu + "\" target=\"_blank\">Thumbnail</a>"},  ])
+      .sortBy(function(d){ return d.acq; })
+      .order(d3.ascending)
+
+
+
+/****************************
+* Step6: Render the Charts  *
+****************************/
+
+  dc.renderAll();
+
+});
+
+</script>
+</body>
+</html>

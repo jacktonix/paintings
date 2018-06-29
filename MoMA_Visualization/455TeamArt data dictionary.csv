@@ -1,0 +1,25 @@
+Data Dictionary,,,,,
+"Team Arts and Entertainment, Conor Lynch, Sean Shepherd, Carrie Wu",,,,,
+MoMA Artworks,,,,,
+,,,,,
+Field name,Data type,Data Format,Variable Length,Description,Example
+Title,Text,,255,Title of the painting,The Starry Night
+Artist,Text,,255,Name of the artist(s),Vincent van Gogh
+ArtistBio,Text,,50,Birth place of artist,Dutch
+Nationality,Text,,50,Nationality of artist,Dutch
+Continent,Text,,<15,Continent of artist's nationality,Europe
+BeginDate,Date,YYYY,4,Year of the artist's birth,1853
+EndDate,Date,YYYY,4,Year of the artist's death,1890
+Gender,Text,Male/Female,4 or 6,Gender of the artist,Male
+DateProduced,Date,YYYY,4,Year artwork was finished,1889
+Medium,Text,,255,Medium in which the art was created,Oil on canvas
+DateAcquired,Date,MM/DD/YYYY,10,Date that the artwork was acquired by the museum,6/10/41
+YearAcquired,Date,YYYY,4,Year artwork was acquired,1941
+AgeAtAcquisition,Integer,XX,2,Age of the artwork at acquisition,52
+OnjectID,Integer,XXXXXX,6,Unique identifier assigned by MoMA,79802
+Diameter_cm,Numeric,XXXX.X,<6,Diameter of artwork in centimeters (if applicable),
+Height_cm,Numeric,XXXX.X,<6,Height of artwork in centimeters (if applicable),73.7
+Width_cm,Numeric,XXXX.X,<6,Width of artwork in centimeters (if applicable),92.1
+Area_cm2,Numeric,XXXXXX.X,<10,Area of artwork in square centimeters,6787.77
+RevURL,URL,,255,Link to artwork page on MoMA website,https://www.moma.org/collection/works/79802
+ThumbnailURL,URL,,255,Link to artwork image on MoMA website,https://www.moma.org/media/W1siZiIsIjEzMzA3NSJdLFsicCIsImNvbnZlcnQiLCItcmVzaXplIDIwMDB4MjAwMFx1MDAzZSJdXQ.jpg?sha=df9568c2c27b4c27
